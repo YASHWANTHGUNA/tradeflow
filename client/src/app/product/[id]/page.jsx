@@ -13,13 +13,9 @@ export default function ProductDetailsPage() {
   const [token, setToken] = useState("");
 
   useEffect(() => {
-    // In a fully finished app, you grab this from localStorage after a user logs in.
-    // For this transition, paste your valid customer token inside these quotes as a fallback!
-    const fallbackCustomerToken= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMTJlMDYyMTg2ZTVlNWU3NTUxZmY5MSIsImlhdCI6MTc3OTYyMTk4NiwiZXhwIjoxNzgyMjEzOTg2fQ.Qze6ru1Q7FR_TZ9rc-ijD84n-8BHBHRao9YRZRxF1zA";
-    
-    // Try to get real token, otherwise use fallback so the button still works today
-    const savedToken = localStorage.getItem("token") || fallbackCustomerToken;
-    setToken(savedToken);
+    // We now strictly pull the token from the browser's secure storage!
+    const savedToken = localStorage.getItem("token");
+    setToken(savedToken || "");
   }, []);
 
   return (
