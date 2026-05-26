@@ -19,8 +19,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
+      <body>
         {children}
         {/* 2. Add Toaster right before the closing body tag */}
         <Toaster position="bottom-right" reverseOrder={false} />

@@ -1,98 +1,128 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import toast from "react-hot-toast";
 
-export default function DashboardPage() {
+export default function Dashboard() {
   const router = useRouter();
-  const [profile, setProfile] = useState(null);
+  const [inventory, setInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem("token");
-      
-      // Security Check: If no token, kick them back to login
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
+    const fetchLedger = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/auth/profile", {
-          method: "GET",
+        const token = localStorage.getItem("token");
+        if (!token) {
+          router.push("/login");
+          return;
+        }
+
+        const response = await fetch("http://localhost:5000/api/products/merchant", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        const data = await response.json();
+        if (!response.ok) throw new Error("Failed to fetch ledger");
 
-        if (data.success) {
-          setProfile(data.user);
-        } else {
-          // Token might be expired/invalid
-          localStorage.removeItem("token");
-          router.push("/login");
-        }
+        const data = await response.json();
+        setInventory(data);
       } catch (error) {
-        console.error("Failed to fetch profile");
+        toast.error("Could not load inventory ledger.");
+        console.error(error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchLedger();
   }, [router]);
 
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading Ledger...</div>;
-  }
+  const handleSignOut = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Welcome back, {profile.name}
-        </h1>
-
-        {/* The Financial Metrics Card */}
+      <div className="max-w-5xl mx-auto space-y-8">
+        
+        {/* Top Stats Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-700">
-            <h2 className="text-sm font-medium text-blue-100 uppercase tracking-wide">
-              Total Wallet Balance
-            </h2>
-            <p className="mt-2 text-4xl font-extrabold text-white">
-              ₹{profile.walletBalance || 0}
-            </p>
-            <p className="mt-1 text-sm text-blue-200">
-              Platform fees (10%) have already been deducted.
-            </p>
+          <div className="bg-blue-600 px-6 py-8 text-white flex justify-between items-center">
+            <div>
+              <h2 className="text-sm font-medium text-blue-100 uppercase tracking-wider">Total Inventory Value</h2>
+              <p className="mt-2 text-4xl font-extrabold">
+                ₹{inventory.reduce((total, item) => total + item.price, 0).toLocaleString("en-IN")}
+              </p>
+            </div>
+            <Link 
+              href="/add-product" 
+              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition"
+            >
+              + List New Item
+            </Link>
           </div>
           
-          <div className="p-6 bg-white">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Account Details</h3>
-            <ul className="divide-y divide-gray-100">
-              <li className="py-3 flex justify-between">
-                <span className="text-gray-500">Email</span>
-                <span className="font-medium text-gray-900">{profile.email}</span>
-              </li>
-              <li className="py-3 flex justify-between">
-                <span className="text-gray-500">Account Role</span>
-                <span className="font-medium capitalize text-gray-900">{profile.role}</span>
-              </li>
-            </ul>
-            
-            <button 
-              onClick={() => {
-                localStorage.removeItem("token");
-                router.push("/login");
-              }}
-              className="mt-6 w-full text-center px-4 py-2 border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition"
-            >
+          <div className="px-6 py-4 flex justify-between items-center bg-gray-50 border-t border-gray-200">
+            <span className="text-sm text-gray-500">Merchant Account Active</span>
+            <button onClick={handleSignOut} className="text-sm text-red-600 font-medium hover:text-red-800">
               Sign Out
             </button>
           </div>
+        </div>
+
+        {/* Inventory Ledger Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-200">
+            <h3 className="text-lg font-bold text-gray-900">Active Inventory Ledger</h3>
+          </div>
+          
+          {isLoading ? (
+            <div className="p-6 text-center text-gray-500">Loading ledger...</div>
+          ) : inventory.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">No products listed yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Listed</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price (₹)</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {inventory.map((item) => (
+                    <tr key={item._id} className="hover:bg-gray-50 transition">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <img className="h-10 w-10 rounded object-cover" src={item.image} alt={item.title} />
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{item.title}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(item.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                        ₹{item.price.toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
