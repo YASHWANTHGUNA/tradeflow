@@ -3,7 +3,8 @@ import Link from "next/link";
 import { 
   ShoppingCart, ShieldCheck, Zap, BarChart3, 
   Package, Users, ArrowRight, CheckCircle2,
-  Store, Globe, ArrowRightLeft, CreditCard
+  Store, Globe, ArrowRightLeft, CreditCard,
+  Database, Server, Layout, Cloud, Code
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -31,18 +32,20 @@ export default function LandingPage() {
       </header>
 
       <main>
-        {/* ----- HERO SECTION ----- */}
-        <section className="relative overflow-hidden bg-white pt-16 pb-32">
-          {/* Background decorative blob */}
+        {/* ----- HERO SECTION (With Tech Grid Background) ----- */}
+        <section className="relative overflow-hidden bg-white pt-16 pb-20">
+          {/* Subtle Grid Background - Pure CSS */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:2rem_2rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+          
           <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
-            <div className="w-[600px] h-[600px] bg-blue-50 rounded-full blur-3xl opacity-60"></div>
+            <div className="w-[600px] h-[600px] bg-blue-50/80 rounded-full blur-3xl opacity-60"></div>
           </div>
 
           <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16 relative z-10">
             
             {/* Left Content */}
             <div className="lg:w-1/2 text-center lg:text-left pt-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold mb-6 border border-blue-100">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold mb-6 border border-blue-100 shadow-sm">
                 <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
                 v2.0 Multi-Vendor is Live
               </div>
@@ -54,7 +57,7 @@ export default function LandingPage() {
                 TradeFlow connects elite tech merchants with enthusiasts. Experience seamless transactions, real-time inventory ledgers, and a frictionless checkout process.
               </p>
               <div className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <Link href="/marketplace" className="w-full sm:w-auto rounded-xl bg-blue-600 px-8 py-4 text-base font-bold text-white shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 group">
+                <Link href="/marketplace" className="w-full sm:w-auto rounded-xl bg-blue-600 px-8 py-4 text-base font-bold text-white shadow-[0_4px_14px_0_rgb(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 group">
                   Explore Marketplace
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
@@ -66,48 +69,34 @@ export default function LandingPage() {
 
             {/* Right Visual: Abstract Marketplace Network Diagram */}
             <div className="lg:w-1/2 relative w-full h-[500px] flex items-center justify-center hidden md:flex">
-              {/* Background Glows */}
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-indigo-50 rounded-full blur-3xl opacity-50 transform scale-110 pointer-events-none"></div>
               
-              {/* Network Connecting Lines (SVG) */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-                {/* Dashed lines representing data/transactions flowing */}
                 <line x1="50%" y1="50%" x2="20%" y2="25%" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="6 6" className="animate-[pulse_2s_infinite]" />
                 <line x1="50%" y1="50%" x2="80%" y2="25%" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="6 6" className="animate-[pulse_3s_infinite]" />
                 <line x1="50%" y1="50%" x2="20%" y2="75%" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="6 6" className="animate-[pulse_2.5s_infinite]" />
                 <line x1="50%" y1="50%" x2="80%" y2="75%" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="6 6" className="animate-[pulse_3.5s_infinite]" />
               </svg>
 
-              {/* ----- THE NODES ----- */}
-              
-              {/* Center Node (TradeFlow Hub) */}
               <div className="absolute z-10 w-28 h-28 bg-white rounded-3xl shadow-2xl border border-blue-100 flex items-center justify-center transform hover:scale-105 transition-transform duration-500">
                 <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
                   <Store className="w-8 h-8 text-white" />
                 </div>
               </div>
 
-              {/* Top Left Node (Global Buyers) */}
               <div className="absolute z-10 w-16 h-16 bg-white/90 backdrop-blur-md rounded-full shadow-xl border border-slate-100 flex items-center justify-center -translate-x-36 -translate-y-32 animate-[bounce_3s_infinite]">
                 <Users className="w-6 h-6 text-indigo-500" />
               </div>
-
-              {/* Top Right Node (Secure Payments) */}
               <div className="absolute z-10 w-16 h-16 bg-white/90 backdrop-blur-md rounded-full shadow-xl border border-slate-100 flex items-center justify-center translate-x-36 -translate-y-32 animate-[bounce_4s_infinite]">
                 <CreditCard className="w-6 h-6 text-emerald-500" />
               </div>
-
-              {/* Bottom Left Node (Seamless Trading) */}
               <div className="absolute z-10 w-16 h-16 bg-white/90 backdrop-blur-md rounded-full shadow-xl border border-slate-100 flex items-center justify-center -translate-x-36 translate-y-32 animate-[bounce_5s_infinite]">
                 <ArrowRightLeft className="w-6 h-6 text-blue-500" />
               </div>
-
-              {/* Bottom Right Node (Global Reach) */}
               <div className="absolute z-10 w-16 h-16 bg-white/90 backdrop-blur-md rounded-full shadow-xl border border-slate-100 flex items-center justify-center translate-x-36 translate-y-32 animate-[bounce_3.5s_infinite]">
                 <Globe className="w-6 h-6 text-purple-500" />
               </div>
               
-              {/* Floating UI Badges */}
               <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-6 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-lg border border-slate-100 flex items-center gap-2 transform hover:-translate-y-1 transition-transform">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
                 <span className="text-xs font-bold text-slate-700">Verified Flow</span>
@@ -118,12 +107,27 @@ export default function LandingPage() {
                 <Zap className="w-4 h-4 text-amber-500" />
               </div>
             </div>
+          </div>
+        </section>
 
+        {/* ----- "POWERED BY" TECH STRIP ----- */}
+        <section className="border-y border-slate-200 bg-white/50 backdrop-blur-sm py-8">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <p className="text-center text-xs font-semibold text-slate-400 uppercase tracking-widest mb-6">
+              Engineered with modern web technologies
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+              <div className="flex items-center gap-2 text-slate-700 font-bold hover:text-blue-600 transition-colors"><Layout className="w-6 h-6" /> Next.js</div>
+              <div className="flex items-center gap-2 text-slate-700 font-bold hover:text-green-600 transition-colors"><Database className="w-6 h-6" /> MongoDB</div>
+              <div className="flex items-center gap-2 text-slate-700 font-bold hover:text-yellow-600 transition-colors"><Server className="w-6 h-6" /> Express</div>
+              <div className="flex items-center gap-2 text-slate-700 font-bold hover:text-sky-500 transition-colors"><Code className="w-6 h-6" /> React</div>
+              <div className="flex items-center gap-2 text-slate-700 font-bold hover:text-indigo-500 transition-colors"><Cloud className="w-6 h-6" /> Cloudinary</div>
+            </div>
           </div>
         </section>
 
         {/* ----- WHY TRADEFLOW (FEATURES) ----- */}
-        <section className="py-24 bg-white border-t border-slate-100">
+        <section className="py-24 bg-slate-50 border-t border-slate-100">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <h2 className="text-blue-600 font-bold tracking-wide uppercase text-sm mb-3 flex items-center justify-center gap-2">
@@ -134,7 +138,8 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Feature 1 */}
-              <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
+              <div className="relative bg-white rounded-2xl p-8 border border-slate-200 hover:border-blue-300 hover:shadow-[0_0_40px_-15px_rgba(37,99,235,0.3)] transition-all duration-300 group hover:-translate-y-1 overflow-hidden z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                 <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors duration-300">
                   <ShoppingCart className="w-7 h-7 text-blue-600 group-hover:text-white transition-colors" />
                 </div>
@@ -145,7 +150,8 @@ export default function LandingPage() {
               </div>
 
               {/* Feature 2 */}
-              <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
+              <div className="relative bg-white rounded-2xl p-8 border border-slate-200 hover:border-indigo-300 hover:shadow-[0_0_40px_-15px_rgba(79,70,229,0.3)] transition-all duration-300 group hover:-translate-y-1 overflow-hidden z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                 <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition-colors duration-300">
                   <ShieldCheck className="w-7 h-7 text-indigo-600 group-hover:text-white transition-colors" />
                 </div>
@@ -156,7 +162,8 @@ export default function LandingPage() {
               </div>
 
               {/* Feature 3 */}
-              <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
+              <div className="relative bg-white rounded-2xl p-8 border border-slate-200 hover:border-emerald-300 hover:shadow-[0_0_40px_-15px_rgba(16,185,129,0.3)] transition-all duration-300 group hover:-translate-y-1 overflow-hidden z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                 <div className="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 transition-colors duration-300">
                   <Users className="w-7 h-7 text-emerald-600 group-hover:text-white transition-colors" />
                 </div>
@@ -171,14 +178,13 @@ export default function LandingPage() {
 
         {/* ----- DARK RICH BOTTOM CTA ----- */}
         <section className="relative py-24 bg-slate-900 overflow-hidden">
-          {/* Glowing background effects */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">
             <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500 rounded-full blur-[100px]"></div>
             <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-500 rounded-full blur-[100px]"></div>
           </div>
 
           <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center relative z-10">
-            <div className="inline-block border border-slate-700 bg-slate-800/50 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-medium text-slate-300 mb-6">
+            <div className="inline-block border border-slate-700 bg-slate-800/50 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-medium text-slate-300 mb-6 shadow-xl">
               Production Grade Marketplace
             </div>
             <h2 className="text-4xl sm:text-5xl font-black text-white mb-6 tracking-tight">
