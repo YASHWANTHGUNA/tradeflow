@@ -1,60 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import CheckoutButton from "@/components/CheckoutButton"; 
+import toast from "react-hot-toast";
 
-export default function ProductDetailsPage() {
-  // 1. DYNAMIC ROUTING: Automatically grab the ID from the URL (e.g., /product/65df...)
-  const params = useParams();
-  const productId = params.id;
-
-  // 2. STATE MANAGEMENT: Prepare to hold the user's secure token
-  const [token, setToken] = useState("");
+export default function ProductDetails() {
+  const { id } = useParams(); // Grabs the ID straight from the URL
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // We now strictly pull the token from the browser's secure storage!
-    const savedToken = localStorage.getItem("token");
-    setToken(savedToken || "");
-  }, []);
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/products/${id}`);
+        if (!response.ok) throw new Error("Product not found");
+        
+        const data = await response.json();
+        setProduct(data);
+      } catch (error) {
+        toast.error(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-500">Loading product...</div>;
+  }
+
+  if (!product) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-500">Product not found.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="md:flex">
-          {/* Mock Product Image Area */}
-          <div className="md:shrink-0 bg-gray-200 md:w-1/2 h-64 md:h-auto flex items-center justify-center">
-            <span className="text-gray-400 text-lg font-medium">Product Image Placeholder</span>
-          </div>
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
+        
+        {/* Product Image */}
+        <div className="md:w-1/2 bg-gray-100 min-h-[300px] flex items-center justify-center overflow-hidden">
+          <img 
+            src={product.image} 
+            alt={product.title} 
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Product Info */}
+        <div className="md:w-1/2 p-8 flex flex-col justify-center">
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-4">{product.title}</h1>
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            {product.description}
+          </p>
           
-          {/* Dynamic Product Details Area */}
-          <div className="p-8 md:w-1/2">
-            <div className="uppercase tracking-wide text-sm text-blue-600 font-semibold mb-1">
-              Tech Accessories
-            </div>
-            <h1 className="block mt-1 text-2xl leading-tight font-bold text-gray-900">
-              TradeFlow Pro Keyboard
-            </h1>
-            <p className="mt-4 text-gray-500 mb-6">
-              This is a dynamic product page. The ID being read from the URL is: 
-              <br/>
-              <code className="text-xs bg-gray-100 text-pink-600 px-1 py-0.5 rounded mt-2 block">
-                {productId}
-              </code>
-            </p>
-
-            <div className="flex items-center justify-between mb-8">
-              <span className="text-3xl font-bold text-gray-900">₹1000</span>
-              <span className="text-sm text-gray-500 line-through mt-2">₹1499</span>
-            </div>
-
-            {/* Your fully dynamic engine! */}
-            {token ? (
-              <CheckoutButton productId={productId} token={token} />
-            ) : (
-              <p className="text-sm text-red-500">Please log in to purchase.</p>
-            )}
+          <div className="text-4xl font-black text-blue-600 mb-8">
+            ₹{product.price.toLocaleString("en-IN")}
           </div>
+
+          <button className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow hover:bg-blue-700 transition duration-300">
+            Proceed to Checkout
+          </button>
         </div>
       </div>
     </div>
