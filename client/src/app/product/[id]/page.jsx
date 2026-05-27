@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,6 +12,17 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+
+// --- RAZORPAY SCRIPT LOADER ---
+const loadScript = (src) => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -43,8 +53,6 @@ export default function ProductDetails() {
     fetchProduct();
   }, [id]);
 
-  // --- SIMULATED SECURE ACTIONS ---
-
   const handleFavorite = () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -52,7 +60,6 @@ export default function ProductDetails() {
       router.push("/login");
       return;
     }
-
     setIsFavorite((prev) => {
       const next = !prev;
       toast.success(next ? "Added to Favorites!" : "Removed from Favorites");
@@ -67,13 +74,13 @@ export default function ProductDetails() {
       router.push("/login");
       return;
     }
-
     setIsCartAdded(true);
     toast.success("Added to Cart!");
     setTimeout(() => setIsCartAdded(false), 2000);
   };
 
-  const handleBuyNow = () => {
+  // --- THE REAL RAZORPAY ENGINE ---
+  const handleBuyNow = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       toast.error("Please log in to complete your purchase.");
@@ -82,13 +89,98 @@ export default function ProductDetails() {
     }
 
     setIsProcessing(true);
-    const toastId = toast.loading("Processing secure payment...");
+    const toastId = toast.loading("Initializing secure gateway...");
 
-    setTimeout(() => {
-      toast.success("Order Placed Successfully! (Simulated)", { id: toastId });
+    try {
+      // 1. Load the Razorpay SDK
+      const res = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+      if (!res) throw new Error("Razorpay SDK failed to load. Check your connection.");
+
+      // 2. Create the Order on Backend
+      const orderResponse = await fetch("http://localhost:5000/api/payments/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId: id }),
+      });
+
+      if (!orderResponse.ok) throw new Error("Failed to create order on the server.");
+      const orderData = await orderResponse.json();
+      toast.dismiss(toastId);
+
+      // 3. Configure Razorpay Popup
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "TradeFlow Marketplace",
+        description: `Purchase of ${product.title}`,
+        order_id: orderData.order.id,
+
+        // 4. Success Handler
+        handler: async function (response) {
+          const verifyToast = toast.loading("Verifying payment signature...");
+          try {
+            const verifyRes = await fetch("http://localhost:5000/api/payments/verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                productId: id,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.success) {
+              toast.success("Payment Successful! Ledger updated.", { id: verifyToast });
+              router.push("/marketplace");
+            } else {
+              throw new Error("Payment verification failed.");
+            }
+          } catch (err) {
+            toast.error(err.message || "Verification error.", { id: verifyToast });
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: "Demo Buyer",
+          email: "demo_buyer@tradeflow.com",
+        },
+        theme: {
+          color: "#2563EB", 
+        },
+        // NEW: Handles the case where the user closes the popup without paying
+        modal: {
+          ondismiss: function () {
+            setIsProcessing(false);
+            toast.error("Payment window closed.");
+          },
+        },
+      };
+
+      // 5. Initialize and Open Razorpay
+      const paymentObject = new window.Razorpay(options);
+      
+      paymentObject.on("payment.failed", function (response) {
+        toast.error(`Payment Failed: ${response.error.description}`);
+        setIsProcessing(false);
+      });
+
+      paymentObject.open();
+
+    } catch (error) {
+      console.error("Payment Gateway Error:", error);
+      toast.error(error.message || "Could not bridge to payment infrastructure.", { id: toastId });
       setIsProcessing(false);
-      router.push("/dashboard");
-    }, 1500);
+    }
   };
 
   if (isLoading) {
@@ -201,7 +293,7 @@ export default function ProductDetails() {
                 {isProcessing ? (
                   <span className="flex items-center gap-2">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Securing payment...
+                    Connecting to Razorpay...
                   </span>
                 ) : (
                   <>
@@ -211,8 +303,8 @@ export default function ProductDetails() {
               </button>
             </div>
 
-            <p className="text-center text-xs text-slate-400 mt-4">
-              Payments are simulated for this portfolio demonstration.
+            <p className="text-center text-xs text-slate-400 mt-4 font-medium tracking-wide">
+              Secure environment integration active via Razorpay Ecosystem.
             </p>
           </div>
         </div>

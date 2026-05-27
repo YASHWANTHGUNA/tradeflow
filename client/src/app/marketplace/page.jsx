@@ -8,13 +8,23 @@ import { Search, Filter, ShoppingBag, PackageSearch, Loader2 } from "lucide-reac
 export default function Marketplace() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [keyword, setKeyword] = useState("");
+  
+  // FIX: Track when the layout has officially mounted on the client device
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    // Setting this to true guarantees localStorage checks wait for the browser window
+    setIsMounted(true);
+
     const fetchProducts = async () => {
+      setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/products");
+        const response = await fetch(
+          `http://localhost:5000/api/products?keyword=${encodeURIComponent(keyword)}`
+        );
         if (!response.ok) throw new Error("Failed to load marketplace");
-        
+
         const data = await response.json();
         setProducts(data);
       } catch (error) {
@@ -25,8 +35,12 @@ export default function Marketplace() {
       }
     };
 
-    fetchProducts();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      fetchProducts();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [keyword]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-200">
@@ -35,9 +49,12 @@ export default function Marketplace() {
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center sticky top-0 z-50">
         <Link href="/" className="text-xl font-black text-blue-600 tracking-tighter">TradeFlow.</Link>
         <div>
-          {typeof window !== 'undefined' && localStorage.getItem("token") ? (
+          {/* FIX: prevents hydration discrepancies by matching server state on render #1 */}
+          {isMounted && localStorage.getItem("token") ? (
             <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Dashboard</Link>
+              <Link href="/dashboard" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">
+                Dashboard
+              </Link>
               <button 
                 onClick={() => {
                   localStorage.removeItem("token");
@@ -50,8 +67,12 @@ export default function Marketplace() {
             </div>
           ) : (
             <div className="space-x-6 flex items-center">
-              <Link href="/login" className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition">Log in</Link>
-              <Link href="/signup" className="text-sm font-semibold text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-500 transition shadow-sm">Sign up</Link>
+              <Link href="/login" className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition">
+                Log in
+              </Link>
+              <Link href="/signup" className="text-sm font-semibold text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-500 transition shadow-sm">
+                Sign up
+              </Link>
             </div>
           )}
         </div>
@@ -59,7 +80,6 @@ export default function Marketplace() {
 
       {/* ----- MARKETPLACE HERO ----- */}
       <div className="relative bg-slate-900 overflow-hidden border-b border-slate-800">
-        {/* Abstract glowing background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-1/2 -left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px]"></div>
           <div className="absolute -bottom-1/2 -right-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px]"></div>
@@ -76,7 +96,6 @@ export default function Marketplace() {
             Browse premium hardware sourced directly from verified independent merchants.
           </p>
 
-          {/* Search & Filter Bar (UI Only for now) */}
           <div className="max-w-2xl mx-auto flex gap-2">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -84,6 +103,8 @@ export default function Marketplace() {
               </div>
               <input 
                 type="text" 
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
                 className="block w-full pl-11 pr-4 py-4 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all" 
                 placeholder="Search for keyboards, monitors, watches..." 
               />
@@ -124,18 +145,15 @@ export default function Marketplace() {
               <Link href={`/product/${product._id}`} key={product._id} className="group">
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 hover:border-blue-200 transition-all duration-300 flex flex-col h-full">
                   
-                  {/* Image Container with Zoom Effect */}
                   <div className="w-full h-64 overflow-hidden bg-slate-100 relative">
                     <img
                       src={product.image}
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    {/* Subtle gradient overlay on hover */}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
                   
-                  {/* Card Content */}
                   <div className="p-6 flex flex-col flex-grow">
                     <div className="flex-grow">
                       <h3 className="text-lg font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
