@@ -13,25 +13,41 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchLedger = async () => {
       try {
+        // 1. The Gatekeeper: Check for the token first
         const token = localStorage.getItem("token");
         if (!token) {
+          toast.error("Session expired. Please log in again.");
+          router.push("/login");
+          return; // Stop the function immediately
+        }
+
+        // 2. The Secure Request: Attach the token to the Headers
+        const response = await fetch("http://localhost:5000/api/products/merchant", { // Update this URL to match your actual backend ledger endpoint
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // The crucial security step
+          },
+        });
+
+        // 3. Handle Token Expiration or Unauthorized Access
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("token");
+          toast.error("Not authorized. Redirecting...");
           router.push("/login");
           return;
         }
 
-        const response = await fetch("http://localhost:5000/api/products/merchant", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) throw new Error("Failed to fetch ledger");
-
+        if (!response.ok) {
+          throw new Error("Failed to fetch ledger data");
+        }
+        
         const data = await response.json();
-        setInventory(data);
+        
+        // setProducts(data); <-- Update whatever state you are using here
       } catch (error) {
-        toast.error("Could not load inventory ledger.");
-        console.error(error);
+        console.error("Dashboard Fetch Error:", error);
+        toast.error("Could not load dashboard data.");
       } finally {
         setIsLoading(false);
       }

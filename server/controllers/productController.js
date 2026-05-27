@@ -56,13 +56,25 @@ export const uploadProductImage = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to upload image" });
   }
 };
+
 export const getProducts = async (req, res) => {
   try {
-    // Fetch all products, sorted by newest first
-    const products = await Product.find({}).sort({ createdAt: -1 });
+    // 1. Check if the frontend sent a search query
+    const keyword = req.query.keyword
+      ? {
+          title: {
+            $regex: req.query.keyword,
+            $options: "i", // "i" means case-insensitive (matches "WATCH", "watch", "WaTcH")
+          },
+        }
+      : {}; // If no keyword, return an empty object to fetch everything
+
+    // 2. Query MongoDB with the keyword
+    const products = await Product.find({ ...keyword }).sort({ createdAt: -1 });
+    
     res.status(200).json(products);
   } catch (error) {
-    console.error("Fetch Error:", error);
+    console.error("Fetch Products Error:", error);
     res.status(500).json({ message: 'Server Error: Could not fetch products' });
   }
 };
