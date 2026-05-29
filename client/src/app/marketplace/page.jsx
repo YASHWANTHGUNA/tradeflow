@@ -3,26 +3,28 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Search, Filter, ShoppingBag, PackageSearch, Loader2 } from "lucide-react";
+import {
+  Search,
+  Filter,
+  ShoppingBag,
+  PackageSearch,
+  Loader2,
+} from "lucide-react";
 
 export default function Marketplace() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
-  
-  // FIX: Track when the layout has officially mounted on the client device
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // Setting this to true guarantees localStorage checks wait for the browser window
-    setIsMounted(true);
-
     const fetchProducts = async () => {
       setIsLoading(true);
+
       try {
         const response = await fetch(
           `http://localhost:5000/api/products?keyword=${encodeURIComponent(keyword)}`
         );
+
         if (!response.ok) throw new Error("Failed to load marketplace");
 
         const data = await response.json();
@@ -44,41 +46,6 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-200">
-      
-      {/* ----- DYNAMIC NAVIGATION ----- */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center sticky top-0 z-50">
-        <Link href="/" className="text-xl font-black text-blue-600 tracking-tighter">TradeFlow.</Link>
-        <div>
-          {/* FIX: prevents hydration discrepancies by matching server state on render #1 */}
-          {isMounted && localStorage.getItem("token") ? (
-            <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">
-                Dashboard
-              </Link>
-              <button 
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  window.location.reload(); 
-                }} 
-                className="text-sm font-semibold text-red-600 hover:text-red-800 transition"
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <div className="space-x-6 flex items-center">
-              <Link href="/login" className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition">
-                Log in
-              </Link>
-              <Link href="/signup" className="text-sm font-semibold text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-500 transition shadow-sm">
-                Sign up
-              </Link>
-            </div>
-          )}
-        </div>
-      </nav>
-
-      {/* ----- MARKETPLACE HERO ----- */}
       <div className="relative bg-slate-900 overflow-hidden border-b border-slate-800">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-1/2 -left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px]"></div>
@@ -89,9 +56,14 @@ export default function Marketplace() {
           <div className="inline-flex items-center justify-center p-3 bg-blue-500/10 rounded-2xl mb-6 border border-blue-500/20">
             <ShoppingBag className="w-6 h-6 text-blue-400" />
           </div>
+
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-6">
-            The Global <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Tech Exchange</span>
+            The Global{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+              Tech Exchange
+            </span>
           </h1>
+
           <p className="mt-2 text-slate-400 max-w-2xl mx-auto text-lg mb-10">
             Browse premium hardware sourced directly from verified independent merchants.
           </p>
@@ -101,14 +73,16 @@ export default function Marketplace() {
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-slate-400" />
               </div>
-              <input 
-                type="text" 
+
+              <input
+                type="text"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="block w-full pl-11 pr-4 py-4 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all" 
-                placeholder="Search for keyboards, monitors, watches..." 
+                className="block w-full pl-11 pr-4 py-4 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all"
+                placeholder="Search for keyboards, monitors, watches..."
               />
             </div>
+
             <button className="flex items-center justify-center gap-2 px-6 py-4 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-all backdrop-blur-sm">
               <Filter className="w-5 h-5" />
               <span className="hidden sm:block font-medium">Filters</span>
@@ -117,11 +91,12 @@ export default function Marketplace() {
         </div>
       </div>
 
-      {/* ----- PRODUCT GRID ----- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold text-slate-900">Latest Arrivals</h2>
-          <span className="text-sm font-medium text-slate-500">{products.length} Items</span>
+          <span className="text-sm font-medium text-slate-500">
+            {products.length} Items
+          </span>
         </div>
 
         {isLoading ? (
@@ -142,9 +117,12 @@ export default function Marketplace() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {products.map((product) => (
-              <Link href={`/product/${product._id}`} key={product._id} className="group">
+              <Link
+                href={`/product/${product._id}`}
+                key={product._id}
+                className="group"
+              >
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 hover:border-blue-200 transition-all duration-300 flex flex-col h-full">
-                  
                   <div className="w-full h-64 overflow-hidden bg-slate-100 relative">
                     <img
                       src={product.image}
@@ -153,7 +131,7 @@ export default function Marketplace() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
-                  
+
                   <div className="p-6 flex flex-col flex-grow">
                     <div className="flex-grow">
                       <h3 className="text-lg font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
@@ -163,7 +141,7 @@ export default function Marketplace() {
                         {product.description}
                       </p>
                     </div>
-                    
+
                     <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-100">
                       <span className="text-xl font-black text-slate-900">
                         ₹{product.price.toLocaleString("en-IN")}
@@ -173,7 +151,6 @@ export default function Marketplace() {
                       </span>
                     </div>
                   </div>
-
                 </div>
               </Link>
             ))}

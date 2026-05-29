@@ -55,3 +55,61 @@ export const getUserProfile = async (req, res) => {
     res.status(500).json({ message: 'Server Error: ' + error.message });
   }
 };
+
+export const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // 1. Update Universal Fields
+    user.name = req.body.name || user.name;
+    user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
+    user.profilePicture = req.body.profilePicture || user.profilePicture;
+
+    // Optional: Password update logic
+    if (req.body.password) {
+      user.password = req.body.password; // Note: Ensure you have a pre-save hook in User.js to bcrypt this!
+    }
+
+    // 2. Update Role-Specific Fields
+    if (user.role === 'customer') {
+      user.shippingAddress = {
+        street: req.body.street || user.shippingAddress?.street || '',
+        city: req.body.city || user.shippingAddress?.city || '',
+        state: req.body.state || user.shippingAddress?.state || '',
+        postalCode: req.body.postalCode || user.shippingAddress?.postalCode || '',
+      };
+    } else if (user.role === 'merchant') {
+      user.storeDetails = {
+        storeName: req.body.storeName || user.storeDetails?.storeName || '',
+        storeDescription: req.body.storeDescription || user.storeDetails?.storeDescription || '',
+        gstNumber: req.body.gstNumber || user.storeDetails?.gstNumber || '',
+      };
+      
+      // Mark details as submitted if store name is provided
+      if (req.body.storeName) {
+        user.isDetailsSubmitted = true;
+      }
+    }
+
+    // 3. Save to MongoDB
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        role: updatedUser.role,
+      }
+    });
+
+  } catch (error) {
+    console.error("Profile Update Error:", error);
+    res.status(500).json({ message: 'Server Error: Could not update profile' });
+  }
+};

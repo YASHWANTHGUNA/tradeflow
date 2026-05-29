@@ -5,6 +5,7 @@ import {
   Store, Globe, ArrowRightLeft, CreditCard
 } from "lucide-react";
 
+
 export default function LandingPage() {
   return (
     <div className="bg-slate-50 min-h-screen font-sans selection:bg-blue-200">
