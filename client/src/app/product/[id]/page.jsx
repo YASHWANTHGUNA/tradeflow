@@ -12,6 +12,8 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+// 1. IMPORT THE GLOBAL CART CONTEXT
+import { useCart } from "@/context/CartContext";
 
 // --- RAZORPAY SCRIPT LOADER ---
 const loadScript = (src) => {
@@ -27,6 +29,9 @@ const loadScript = (src) => {
 export default function ProductDetails() {
   const { id } = useParams();
   const router = useRouter();
+  
+  // 2. DESTRUCTURE THE GLOBAL ADD FUNCTION
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,20 +58,41 @@ export default function ProductDetails() {
     fetchProduct();
   }, [id]);
 
-  const handleFavorite = () => {
+  // 3. THE FIX: CLIENT-SERVER SYNCHRONIZATION
+  const handleFavorite = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       toast.error("Please log in to save favorites.");
       router.push("/login");
       return;
     }
-    setIsFavorite((prev) => {
-      const next = !prev;
-      toast.success(next ? "Added to Favorites!" : "Removed from Favorites");
-      return next;
-    });
+
+    // Optimistic UI Update (Makes the heart turn red instantly for good UX)
+    const newFavoriteState = !isFavorite;
+    setIsFavorite(newFavoriteState);
+
+    try {
+      // Send the actual update to the backend pipeline
+      const response = await fetch("http://localhost:5000/api/users/favorites", {
+        method: newFavoriteState ? "POST" : "DELETE", // Assuming POST adds, DELETE removes
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId: id }),
+      });
+
+      if (!response.ok) throw new Error("Failed to sync favorite with server");
+      
+      toast.success(newFavoriteState ? "Saved to Favorites!" : "Removed from Favorites");
+    } catch (error) {
+      // If the server fails, revert the UI back to its original state
+      setIsFavorite(!newFavoriteState);
+      toast.error("Could not sync with server. Please try again.");
+    }
   };
 
+  // 4. THE FIX: GLOBAL STATE INJECTION
   const handleAddToCart = () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -74,12 +100,15 @@ export default function ProductDetails() {
       router.push("/login");
       return;
     }
+    
+    // Push the product to the global CartContext
+    addToCart(product);
+    
+    // Manage local UI feedback
     setIsCartAdded(true);
-    toast.success("Added to Cart!");
     setTimeout(() => setIsCartAdded(false), 2000);
   };
 
-  // --- THE REAL RAZORPAY ENGINE ---
   const handleBuyNow = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -92,11 +121,9 @@ export default function ProductDetails() {
     const toastId = toast.loading("Initializing secure gateway...");
 
     try {
-      // 1. Load the Razorpay SDK
       const res = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
       if (!res) throw new Error("Razorpay SDK failed to load. Check your connection.");
 
-      // 2. Create the Order on Backend
       const orderResponse = await fetch("http://localhost:5000/api/payments/create-order", {
         method: "POST",
         headers: {
@@ -110,7 +137,6 @@ export default function ProductDetails() {
       const orderData = await orderResponse.json();
       toast.dismiss(toastId);
 
-      // 3. Configure Razorpay Popup
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
         amount: orderData.order.amount,
@@ -119,7 +145,6 @@ export default function ProductDetails() {
         description: `Purchase of ${product.title}`,
         order_id: orderData.order.id,
 
-        // 4. Success Handler
         handler: async function (response) {
           const verifyToast = toast.loading("Verifying payment signature...");
           try {
@@ -157,7 +182,6 @@ export default function ProductDetails() {
         theme: {
           color: "#2563EB", 
         },
-        // NEW: Handles the case where the user closes the popup without paying
         modal: {
           ondismiss: function () {
             setIsProcessing(false);
@@ -166,7 +190,6 @@ export default function ProductDetails() {
         },
       };
 
-      // 5. Initialize and Open Razorpay
       const paymentObject = new window.Razorpay(options);
       
       paymentObject.on("payment.failed", function (response) {
