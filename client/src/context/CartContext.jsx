@@ -29,16 +29,20 @@ export const CartProvider = ({ children }) => {
 
   // Actions
   const addToCart = (product) => {
-    setCart((prevCart) => {
-      // Check if item is already in cart
-      const existingItem = prevCart.find((item) => item._id === product._id);
-      if (existingItem) {
-        toast.error("Item is already in your cart!");
-        return prevCart;
-      }
-      toast.success("Added to Cart!");
-      return [...prevCart, { ...product, quantity: 1 }];
-    });
+    // 1. Check the existing cart state FIRST, outside the setter
+    const existingItem = cart.find((item) => item._id === product._id);
+
+    if (existingItem) {
+      // 2. Trigger the side effect safely
+      toast.error("Item is already in your cart!");
+      return; // Stop the function here
+    }
+
+    // 3. Update the state with a clean, pure function
+    setCart((prevCart) => [...prevCart, { ...product, quantity: 1 }]);
+    
+    // 4. Trigger the success side effect safely
+    toast.success("Added to Cart!");
   };
 
   const removeFromCart = (productId) => {
