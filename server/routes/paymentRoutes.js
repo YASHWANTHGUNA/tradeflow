@@ -1,13 +1,13 @@
-import express from 'express';
-import { createOrder, verifyPayment } from '../controllers/paymentController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import { createOrder, verifyPayment } from "../controllers/paymentController.js"; 
 
 const router = express.Router();
 
-// Matches: POST http://localhost:5000/api/payments/create-order
-router.post('/create-order', protect, createOrder);
+// 1. THIS MUST BE "/create-order"
+router.post("/create-order", protect, createOrder);
 
-// Matches: POST http://localhost:5000/api/payments/verify
-router.post('/verify', protect, verifyPayment);
+// 2. THIS MUST BE "/verify"
+router.post("/verify", protect, verifyPayment);
 
 export default router;

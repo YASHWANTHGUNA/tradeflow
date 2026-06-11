@@ -1,7 +1,8 @@
-import Razorpay from 'razorpay';
-import crypto from 'crypto';
-import Product from '../models/Product.js';
-import User from '../models/User.js';
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import Product from "../models/Product.js";
+import User from "../models/User.js";
+import Order from "../models/Order.js";
 
 // @desc    Create a Razorpay Order for a product
 // @route   POST /api/payments/create-order
@@ -25,15 +26,17 @@ export const createOrder = async (req, res) => {
     for (let item of items) {
       const product = await Product.findById(item.productId);
       if (!product) {
-        return res.status(404).json({ message: `Product ${item.productId} not found` });
+        return res
+          .status(404)
+          .json({ message: `Product ${item.productId} not found` });
       }
       // Multiply DB price by requested quantity
-      totalAmount += (product.price * item.quantity);
+      totalAmount += product.price * item.quantity;
       validatedItems.push({
         product: product._id,
         vendor: product.vendor,
         price: product.price,
-        quantity: item.quantity
+        quantity: item.quantity,
       });
     }
 
@@ -47,16 +50,17 @@ export const createOrder = async (req, res) => {
     const order = await razorpay.orders.create(options);
 
     if (!order) {
-      return res.status(500).json({ message: "Failed to create Razorpay order" });
+      return res
+        .status(500)
+        .json({ message: "Failed to create Razorpay order" });
     }
 
     // 3. Send order details AND the securely validated items back to frontend
     res.status(200).json({
       success: true,
       order,
-      validatedItems // We send this back so the frontend verification step knows exactly what was bought
+      validatedItems, // We send this back so the frontend verification step knows exactly what was bought
     });
-
   } catch (error) {
     console.error("Order Creation Error:", error);
     res.status(500).json({ message: "Server error during order creation" });
@@ -91,30 +95,24 @@ export const verifyPayment = async (req, res) => {
 
     // 2. Process Ledger Logic for MULTIPLE items
     for (let item of items) {
-      
-      // A. Update the Buyer's Purchase History
-      // req.user.id comes from your 'protect' middleware
-      await User.findByIdAndUpdate(req.user.id, {
-        $push: { purchaseHistory: item.product }
+      await Order.create({
+        buyer: req.user.id,
+        merchant: item.vendor,
+        product: item.product,
+        quantity: item.quantity,
+        price: item.price,
+        totalAmount: item.price * item.quantity, // Merged Schema Addition
+        razorpayOrderId: razorpay_order_id, // Merged Schema Addition
+        paymentStatus: "completed",
+        fulfillmentStatus: "Processing",
       });
-
-      // B. Process Merchant Ledger Logic (90% to vendor, 10% platform fee)
-      // We multiply by quantity in case they bought 3 of the same monitor
-      const totalPaid = item.price * item.quantity;
-      const vendorEarnings = totalPaid * 0.90;
-
-      // Add the funds to the specific Merchant's wallet
-      await User.findByIdAndUpdate(
-        item.vendor,
-        { $inc: { walletBalance: vendorEarnings } }
-      );
     }
 
     res.status(200).json({
       success: true,
-      message: "Payment verified, history logged, and ledgers updated successfully.",
+      message:
+        "Payment verified, history logged, and ledgers updated successfully.",
     });
-
   } catch (error) {
     console.error("Verification Error:", error);
     res.status(500).json({
