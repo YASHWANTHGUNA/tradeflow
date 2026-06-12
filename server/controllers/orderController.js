@@ -1,6 +1,4 @@
 import Order from "../models/Order.js";
-
-// Fetch all active orders for the logged-in merchant
 export const getMerchantOrders = async (req, res) => {
   try {
     // req.user.id comes from your auth middleware
@@ -37,5 +35,20 @@ export const updateOrderStatus = async (req, res) => {
   } catch (error) {
     console.error("Error updating order status:", error);
     res.status(500).json({ message: "Failed to update shipping ledger." });
+  }
+};
+
+// NEW: Fetch all orders for the logged-in buyer
+export const getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ buyer: req.user.id })
+      .populate("product")
+      .populate("merchant", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error("Error fetching buyer orders:", error);
+    res.status(500).json({ message: "Failed to fetch order history." });
   }
 };

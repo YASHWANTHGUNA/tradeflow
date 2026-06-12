@@ -73,13 +73,16 @@ export default function ProfileSwitchboard() {
       }
 
       try {
-        const response = await fetch("http://localhost:5000/api/users/profile", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+        const response = await fetch(
+          "http://localhost:5000/api/users/profile",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         if (!response.ok) throw new Error("Failed to load profile data");
 
@@ -210,7 +213,9 @@ function CustomerProfile({ profile, onEditClick, onViewList }) {
 
         {/* Favorites */}
         <div
-          onClick={() => onViewList("Saved Items", "favorites", profile.favorites)}
+          onClick={() =>
+            onViewList("Saved Items", "favorites", profile.favorites)
+          }
           className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hover:shadow-md hover:border-red-200 transition-all cursor-pointer group"
         >
           <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-500 transition-colors">

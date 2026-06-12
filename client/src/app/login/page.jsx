@@ -46,6 +46,7 @@ export default function LoginPage() {
 
       // 1. Save the secure token
       localStorage.setItem("token", data.token);
+      localStorage.setItem("userRole", data.role || "customer");
       toast.success(`Welcome back!`, { id: toastId });
 
       // 2. The RBAC Gatekeeper (Role-Based Access Control)
