@@ -95,17 +95,30 @@ export const verifyPayment = async (req, res) => {
 
     // 2. Process Ledger Logic for MULTIPLE items
     for (let item of items) {
+      // A. Create the Order Ticket
       await Order.create({
         buyer: req.user.id,
         merchant: item.vendor,
         product: item.product,
         quantity: item.quantity,
         price: item.price,
-        totalAmount: item.price * item.quantity, // Merged Schema Addition
-        razorpayOrderId: razorpay_order_id, // Merged Schema Addition
+        totalAmount: item.price * item.quantity, 
+        razorpayOrderId: razorpay_order_id, 
         paymentStatus: "completed",
         fulfillmentStatus: "Processing",
       });
+
+      // B. THE FIX: Calculate the 90% cut and route it to the Merchant's Wallet
+      const platformFee = 0.10; // 10% TradeFlow Commission
+      const totalItemAmount = item.price * item.quantity;
+      const merchantCut = totalItemAmount * (1 - platformFee);
+
+      // Securely increment the specific merchant's balance
+      await User.findByIdAndUpdate(item.vendor, {
+        $inc: { walletBalance: merchantCut }
+      });
+
+      console.log(`[LEDGER] Credited ₹${merchantCut} to Merchant ID: ${item.vendor}`);
     }
 
     res.status(200).json({

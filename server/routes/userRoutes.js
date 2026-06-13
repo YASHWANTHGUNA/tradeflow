@@ -10,7 +10,7 @@ router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
 router.route('/favorites')
   .get(protect, getFavorites)
-  .post(protect, toggleFavorite);
-  router.delete('/favorites', protect, removeFavorite);
+  .post(protect, toggleFavorite)
+  .delete(protect, removeFavorite);
 
 export default router;

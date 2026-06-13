@@ -1,17 +1,24 @@
 "use client";
 
-import { X, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { X, Trash2, ShoppingBag, ArrowRight, Minus, Plus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 export default function CartDrawer({ isOpen, onClose }) {
-  const { cart, removeFromCart, cartTotal, clearCart } = useCart();
+  const { cart, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  if (!isOpen) return null;
+  // Ensures the portal only renders on the client side to prevent hydration errors
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const loadScript = (src) => {
     return new Promise((resolve) => {
@@ -115,14 +122,15 @@ export default function CartDrawer({ isOpen, onClose }) {
     }
   };
 
-  return (
+  // We wrap the entire drawer UI in a constant so we can teleport it
+  const drawerContent = (
     <>
       <div
-        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] transition-opacity"
+        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9998] transition-opacity"
         onClick={onClose}
       />
 
-      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-[101] flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-300">
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
@@ -170,7 +178,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain mix-blend-multiply"
                     />
                   </div>
 
@@ -179,13 +187,31 @@ export default function CartDrawer({ isOpen, onClose }) {
                       <h3 className="text-sm font-bold text-slate-900 line-clamp-1">
                         {item.title}
                       </h3>
-                      <p className="text-xs text-slate-500 mt-1">Qty: {item.quantity}</p>
+                      <div className="font-black text-blue-600 mt-1">
+                        ₹{item.price.toLocaleString("en-IN")}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
-                      <span className="font-black text-blue-600">
-                        ₹{item.price.toLocaleString("en-IN")}
-                      </span>
+                      {/* Interactive Quantity Control */}
+                      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
+                        <button
+                          onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                          className="px-2 py-1 text-slate-500 hover:bg-slate-50 transition-colors"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="px-3 py-1 text-xs font-bold text-slate-900 border-x border-slate-200">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                          className="px-2 py-1 text-slate-500 hover:bg-slate-50 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+
                       <button
                         onClick={() => removeFromCart(item._id)}
                         className="text-slate-400 hover:text-red-500 transition-colors p-1"
@@ -213,7 +239,7 @@ export default function CartDrawer({ isOpen, onClose }) {
             <button
               onClick={handleCheckout}
               disabled={isProcessing}
-              className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] hover:shadow-[0_0_40px_-5px_rgba(37,99,235,0.6)] transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isProcessing ? "Processing..." : "Proceed to Checkout"}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -223,4 +249,7 @@ export default function CartDrawer({ isOpen, onClose }) {
       </div>
     </>
   );
+
+  // 💥 THE MAGIC: Teleporting the drawer to the document.body
+  return createPortal(drawerContent, document.body);
 }
