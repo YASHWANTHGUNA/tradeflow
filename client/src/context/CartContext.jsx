@@ -27,39 +27,62 @@ export const CartProvider = ({ children }) => {
     }
   }, [cart, isMounted]);
 
-  // Actions
+  // Action: Add Item to Cart
   const addToCart = (product) => {
-    // 1. Check the existing cart state FIRST, outside the setter
     const existingItem = cart.find((item) => item._id === product._id);
 
     if (existingItem) {
-      // 2. Trigger the side effect safely
       toast.error("Item is already in your cart!");
-      return; // Stop the function here
+      return;
     }
 
-    // 3. Update the state with a clean, pure function
     setCart((prevCart) => [...prevCart, { ...product, quantity: 1 }]);
-    
-    // 4. Trigger the success side effect safely
     toast.success("Added to Cart!");
   };
 
+  // Action: Remove Item completely
   const removeFromCart = (productId) => {
     setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
     toast.success("Removed from cart.");
   };
 
+  // Action: Update Quantity (Increments, Decrements, or Direct Inputs)
+  const updateQuantity = (productId, newQuantity) => {
+    if (newQuantity < 1) {
+      // If quantity drops below 1, remove it cleanly
+      setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
+      toast.success("Removed from cart.");
+      return;
+    }
+
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item._id === productId ? { ...item, quantity: newQuantity } : item
+      )
+    );
+  };
+
+  // Action: Clear entire cart
   const clearCart = () => {
     setCart([]);
   };
 
-  // Calculate Total
+  // Calculations
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
   return (
     <CartContext.Provider 
-      value={{ cart, addToCart, removeFromCart, clearCart, cartTotal, isMounted }}
+      value={{ 
+        cart, 
+        addToCart, 
+        removeFromCart, 
+        updateQuantity, 
+        clearCart, 
+        cartCount, 
+        cartTotal, 
+        isMounted 
+      }}
     >
       {children}
     </CartContext.Provider>

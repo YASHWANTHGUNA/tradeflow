@@ -1,14 +1,57 @@
 "use client";
 
-import { X, ExternalLink, ShoppingBag } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, ExternalLink, ShoppingBag, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
-export default function ProfileListModal({ isOpen, onClose, title, items, type }) {
+export default function ProfileListModal({ isOpen, onClose, title, items: initialItems, type, onRefresh }) {
+  const [items, setItems] = useState([]);
+  const [removingId, setRemovingId] = useState(null);
+
+  // Sync the modal's internal state with the props when it opens
+  useEffect(() => {
+    setItems(initialItems || []);
+  }, [initialItems, isOpen]);
+
   if (!isOpen) return null;
+
+  const handleRemoveFavorite = async (productId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setRemovingId(productId);
+    
+    try {
+      const response = await fetch("http://localhost:5000/api/users/favorites", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId }),
+      });
+
+      if (!response.ok) throw new Error("Failed to remove");
+
+      // Instantly remove from the UI without a page reload
+      setItems((prev) => prev.filter((item) => item._id !== productId));
+      toast.success("Removed from favorites");
+      
+      // Tell the parent profile page to refresh its data quietly
+      if (onRefresh) onRefresh();
+      
+    } catch (error) {
+      toast.error("Could not remove item.");
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+        
         {/* Modal Header */}
         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <div>
@@ -53,7 +96,7 @@ export default function ProfileListModal({ isOpen, onClose, title, items, type }
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain mix-blend-multiply"
                     />
                   </div>
 
@@ -70,13 +113,30 @@ export default function ProfileListModal({ isOpen, onClose, title, items, type }
                     </div>
                   </div>
 
-                  {/* Action Button */}
-                  <Link
-                    href={`/product/${item._id}`}
-                    className="flex-shrink-0 p-3 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl transition-colors flex items-center gap-2 font-semibold text-sm border border-slate-200 hover:border-blue-200"
-                  >
-                    View <ExternalLink className="w-4 h-4" />
-                  </Link>
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Link
+                      href={`/product/${item._id}`}
+                      className="p-3 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl transition-colors flex items-center gap-2 font-semibold text-sm border border-slate-200 hover:border-blue-200"
+                    >
+                      View <ExternalLink className="w-4 h-4" />
+                    </Link>
+
+                    {/* Render the Remove button ONLY if this is the favorites list */}
+                    {type === "favorites" && (
+                      <button
+                        onClick={() => handleRemoveFavorite(item._id)}
+                        disabled={removingId === item._id}
+                        className="p-3 bg-white hover:bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition-colors border border-slate-200 hover:border-red-200 disabled:opacity-50"
+                      >
+                        {removingId === item._id ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-5 h-5" />
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

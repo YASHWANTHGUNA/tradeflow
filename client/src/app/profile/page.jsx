@@ -66,6 +66,7 @@ export default function ProfileSwitchboard() {
 
     const fetchProfile = async () => {
       const token = localStorage.getItem("token");
+
       if (!token) {
         toast.error("Please log in to view your profile.");
         router.push("/login");
@@ -153,6 +154,7 @@ export default function ProfileSwitchboard() {
         title={listModalConfig.title}
         type={listModalConfig.type}
         items={listModalConfig.items}
+        onRefresh={refreshProfile} 
       />
     </div>
   );
@@ -190,7 +192,6 @@ function CustomerProfile({ profile, onEditClick, onViewList }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Order History */}
         <div
           onClick={() =>
             onViewList("Order History", "history", profile.purchaseHistory)
@@ -211,7 +212,6 @@ function CustomerProfile({ profile, onEditClick, onViewList }) {
           </span>
         </div>
 
-        {/* Favorites */}
         <div
           onClick={() =>
             onViewList("Saved Items", "favorites", profile.favorites)
@@ -230,7 +230,6 @@ function CustomerProfile({ profile, onEditClick, onViewList }) {
           </span>
         </div>
 
-        {/* Account Settings */}
         <div
           onClick={onEditClick}
           className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group"
@@ -287,9 +286,16 @@ function MerchantProfile({ profile, onEditClick }) {
 
           <Link
             href="/dashboard"
+            className="w-full md:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/25"
+          >
+            Financial Ledger
+          </Link>
+
+          <Link
+            href="/dashboard/orders"
             className="w-full md:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-blue-500/25 hover:-translate-y-0.5"
           >
-            Access Financial Ledger
+            Fulfillment Ledger
           </Link>
         </div>
       </div>

@@ -99,7 +99,7 @@ export default function MerchantDashboard() {
                     <div>
                       <h3 className="font-bold text-slate-900">{order.product.title}</h3>
                       <p className="text-sm text-slate-500 mt-1">
-                        Buyer ID: <span className="font-mono text-xs bg-slate-200 px-1.5 py-0.5 rounded">{order.buyer}</span>
+                        Buyer: <span className="font-mono text-xs bg-slate-200 px-1.5 py-0.5 rounded">{order.buyer?.name}</span>
                       </p>
                       <p className="text-sm font-black text-blue-600 mt-1">
                         ₹{(order.price * order.quantity).toLocaleString("en-IN")}

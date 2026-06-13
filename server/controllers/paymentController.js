@@ -121,3 +121,46 @@ export const verifyPayment = async (req, res) => {
     });
   }
 };
+
+export const razorpayWebhook = async (req, res) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    
+    // 1. Verify the signature to ensure the request actually came from Razorpay
+    const shasum = crypto.createHmac('sha256', webhookSecret);
+    shasum.update(JSON.stringify(req.body));
+    const digest = shasum.digest('hex');
+
+    if (digest !== req.headers['x-razorpay-signature']) {
+      console.error("Webhook signature mismatch! Potential attack.");
+      return res.status(400).json({ message: 'Invalid signature' });
+    }
+
+    // 2. Process the specific event
+    const event = req.body.event;
+    
+    if (event === 'payment.captured') {
+      const paymentEntity = req.body.payload.payment.entity;
+      const razorpayOrderId = paymentEntity.order_id;
+
+      // Automatically find the order(s) and lock them in as completed
+      await Order.updateMany(
+        { razorpayOrderId: razorpayOrderId },
+        { 
+          $set: { 
+            paymentStatus: 'completed',
+            fulfillmentStatus: 'Processing' 
+          } 
+        }
+      );
+      
+      console.log(`[WEBHOOK] Ledger automatically updated for order: ${razorpayOrderId}`);
+    }
+
+    // Always return a 200 OK so Razorpay knows you received it
+    res.status(200).json({ status: 'ok' });
+  } catch (error) {
+    console.error('Webhook Error:', error);
+    res.status(500).json({ message: 'Webhook failed' });
+  }
+};

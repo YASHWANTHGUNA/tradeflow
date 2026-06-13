@@ -131,3 +131,66 @@ export const updateUserProfile = async (req, res) => {
     res.status(500).json({ message: "Server Error: Could not update profile" });
   }
 };
+
+export const getFavorites = async (req, res) => {
+  try {
+    // Populate the actual product details so the frontend can display them
+    const user = await User.findById(req.user._id).populate('favorites');
+    res.status(200).json(user.favorites);
+  } catch (error) {
+    console.error("Fetch Favorites Error:", error);
+    res.status(500).json({ message: "Could not fetch favorites" });
+  }
+};
+
+// @desc    Toggle a product in favorites (Add/Remove)
+// @route   POST /api/users/favorites
+// @access  Private
+export const toggleFavorite = async (req, res) => {
+  try {
+    const { productId } = req.body;
+    const user = await User.findById(req.user._id);
+
+    // Check if the product is already in the array
+    const isFavorited = user.favorites.includes(productId);
+
+    if (isFavorited) {
+      // Remove it
+      user.favorites = user.favorites.filter((id) => id.toString() !== productId);
+    } else {
+      // Add it
+      user.favorites.push(productId);
+    }
+
+    await user.save();
+    res.status(200).json({ success: true, favorites: user.favorites });
+  } catch (error) {
+    console.error("Toggle Favorite Error:", error);
+    res.status(500).json({ message: "Could not update favorites" });
+  }
+};
+
+export const removeFavorite = async (req, res) => {
+  try {
+    const { productId } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Filter out the item we want to delete
+    user.favorites = user.favorites.filter((id) => id.toString() !== productId);
+
+    await user.save();
+    
+    res.status(200).json({ 
+      success: true, 
+      message: "Removed from favorites",
+      favorites: user.favorites 
+    });
+  } catch (error) {
+    console.error("Remove Favorite Error:", error);
+    res.status(500).json({ message: "Could not remove favorite" });
+  }
+};

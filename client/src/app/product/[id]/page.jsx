@@ -123,8 +123,6 @@ export default function ProductDetails() {
 
     const fetchFavoriteStatus = async () => {
       try {
-        setIsFavoriteLoading(true);
-
         const response = await fetch(`${API_BASE_URL}/api/users/favorites`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -146,10 +144,6 @@ export default function ProductDetails() {
           setIsFavorite(exists);
         }
       } catch {
-      } finally {
-        if (!ignore) {
-          setIsFavoriteLoading(false);
-        }
       }
     };
 
@@ -183,12 +177,17 @@ export default function ProductDetails() {
       return;
     }
 
-    const nextFavoriteState = !isFavorite;
-    setIsFavorite(nextFavoriteState);
+    // NEW LOGIC: Block duplicates immediately with a Toast
+    if (isFavorite) {
+      toast.error("This item is already in your favorites!");
+      return;
+    }
+
+    setIsFavoriteLoading(true);
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/favorites`, {
-        method: nextFavoriteState ? "POST" : "DELETE",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -200,12 +199,12 @@ export default function ProductDetails() {
         throw new Error("Failed to sync favorite with server");
       }
 
-      toast.success(
-        nextFavoriteState ? "Saved to Favorites!" : "Removed from Favorites"
-      );
+      setIsFavorite(true);
+      toast.success("Saved to Favorites!");
     } catch {
-      setIsFavorite(!nextFavoriteState);
       toast.error("Could not sync with server. Please try again.");
+    } finally {
+      setIsFavoriteLoading(false);
     }
   };
 
@@ -235,6 +234,7 @@ export default function ProductDetails() {
   };
 
   const handleBuyNow = async () => {
+    // ... (Keep existing handleBuyNow logic exactly as it was)
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -512,14 +512,10 @@ export default function ProductDetails() {
                 <button
                   onClick={handleFavorite}
                   disabled={isFavoriteLoading}
-                  aria-label={
-                    isFavorite
-                      ? "Remove from favorites"
-                      : "Add to favorites"
-                  }
+                  aria-label="Add to favorites"
                   className={`flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-300 ${
                     isFavorite
-                      ? "bg-red-50 border-red-100 text-red-500"
+                      ? "bg-red-50 border-red-100 text-red-500 cursor-not-allowed"
                       : "border-slate-200 text-slate-400 hover:border-slate-300 hover:bg-slate-50"
                   } ${isFavoriteLoading ? "opacity-60 cursor-not-allowed" : ""}`}
                 >
