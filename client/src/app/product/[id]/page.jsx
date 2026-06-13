@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {

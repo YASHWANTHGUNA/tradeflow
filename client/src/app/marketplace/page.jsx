@@ -22,7 +22,7 @@ export default function Marketplace() {
 
       try {
         const response = await fetch(
-          `http://localhost:5000/api/products?keyword=${encodeURIComponent(keyword)}`
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/products?keyword=${encodeURIComponent(keyword)}`
         );
 
         if (!response.ok) throw new Error("Failed to load marketplace");

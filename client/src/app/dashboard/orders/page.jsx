@@ -24,7 +24,7 @@ export default function MerchantDashboard() {
     // 2. Fetch Active Orders
     const fetchOrders = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/orders/merchant", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders/merchant`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -46,7 +46,7 @@ export default function MerchantDashboard() {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/orders/${orderId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

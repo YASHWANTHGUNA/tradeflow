@@ -39,7 +39,7 @@ export default function AddProductPage() {
       imagePayload.append("image", file);
 
       // 2. Send image to your Express Cloudinary route
-      const uploadRes = await fetch("http://localhost:5000/api/products/upload", {
+      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/products/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ export default function AddProductPage() {
       toast.loading("Saving product to database...", { id: toastId });
 
       // 3. Send final data to MongoDB (UPDATED: Removed /create from URL)
-      const productRes = await fetch("http://localhost:5000/api/products", {
+      const productRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

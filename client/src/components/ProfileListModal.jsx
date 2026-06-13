@@ -23,7 +23,7 @@ export default function ProfileListModal({ isOpen, onClose, title, items: initia
     setRemovingId(productId);
     
     try {
-      const response = await fetch("http://localhost:5000/api/users/favorites", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/favorites`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

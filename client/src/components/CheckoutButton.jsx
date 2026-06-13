@@ -17,7 +17,7 @@ export default function CheckoutButton({ productId, token }) {
     }
 
     try {
-      const orderResponse = await fetch('http://localhost:5000/api/payments/create-order', {
+      const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/payments/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ export default function CheckoutButton({ productId, token }) {
         order_id: orderData.order.id,
 
         handler: async function (response) {
-          const verifyResponse = await fetch('http://localhost:5000/api/payments/verify', {
+          const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/payments/verify`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

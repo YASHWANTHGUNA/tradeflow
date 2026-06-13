@@ -28,7 +28,7 @@ export default function Dashboard() {
           return;
         }
 
-        const profileRes = await fetch("http://localhost:5000/api/users/profile", {
+        const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/profile`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -41,7 +41,7 @@ export default function Dashboard() {
         const pData = await profileRes.json();
         setMerchantData(pData);
 
-        const response = await fetch("http://localhost:5000/api/products/merchant", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/products/merchant`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
