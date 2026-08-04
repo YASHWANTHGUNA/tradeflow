@@ -15,7 +15,10 @@ const app = express();
 
 
 app.use(cors({
-  origin: ["https://tradeflow-peach.vercel.app", "http://localhost:3000"],
+  origin: ["https://tradeflow-peach.vercel.app",
+    "https://tradeflowapp.me",
+    "https://www.tradeflowapp.me",
+    "http://localhost:3000"],
   credentials: true
 }));
 app.use(express.json());
