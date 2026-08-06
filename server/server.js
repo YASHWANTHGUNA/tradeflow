@@ -1,5 +1,7 @@
+// server/server.js (or index.js)
+import "dotenv/config";
+
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
@@ -8,11 +10,9 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import orderRoutes from "./routes/orderRoutes.js";
 
-dotenv.config();
 connectDB();
 
 const app = express();
-
 
 app.use(cors({
   origin: ["https://tradeflow-peach.vercel.app",

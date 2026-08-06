@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 
 export default function SignupPage() {
   const router = useRouter();
-  
+
   // State for tracking which screen the user is on
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,43 +25,107 @@ export default function SignupPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Step 1: Moves to OTP screen
-  const handleProceedToOTP = (e) => {
+  // Step 1: Send details to the server, which emails an OTP (nothing is
+  // created in Mongo yet — the pending signup lives in the Otp collection
+  // until verified in step 2).
+  const handleProceedToOTP = async (e) => {
     e.preventDefault();
+
     if (!formData.name || !formData.email || !formData.password) {
       toast.error("Please fill in all details.");
       return;
     }
-    setStep(2);
-    toast.success("OTP sent to your email!"); // Fake toast for realism
+
+    setIsLoading(true);
+    const toastId = toast.loading("Sending verification code...");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register/start`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            role: formData.role,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not start registration");
+      }
+
+      toast.success("Verification code sent to your email!", { id: toastId });
+      setStep(2);
+    } catch (error) {
+      toast.error(error.message, { id: toastId });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Step 2: Final Submission to Database
+  // Step 2: Verify OTP — this is where the User document actually gets
+  // created. 999999 still works as the fallback bypass code.
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     const toastId = toast.loading("Verifying and creating account...");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register/verify`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email,
+            otp: formData.otp,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
+        throw new Error(data.message || "Verification failed");
       }
 
       toast.success("Account created successfully!", { id: toastId });
       router.push("/login"); // Redirect to login as requested
-
     } catch (error) {
       toast.error(error.message, { id: toastId });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Lets the user request a fresh code without retyping name/email/password
+  const handleResendOtp = async () => {
+    const toastId = toast.loading("Resending code...");
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register/start`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            role: formData.role,
+          }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Could not resend code");
+      toast.success("New code sent!", { id: toastId });
+    } catch (error) {
+      toast.error(error.message, { id: toastId });
     }
   };
 
@@ -118,8 +182,8 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Continue
+              <button type="submit" disabled={isLoading} className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400">
+                {isLoading ? "Sending code..." : "Continue"}
               </button>
             </form>
           )}
@@ -152,6 +216,14 @@ export default function SignupPage() {
                   {isLoading ? "Verifying..." : "Verify & Sign Up"}
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                className="w-full text-center text-xs font-medium text-blue-600 hover:text-blue-500"
+              >
+                Didn't get a code? Resend
+              </button>
             </form>
           )}
 

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
@@ -25,6 +26,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['customer', 'merchant'], // Preserved your existing role definitions
       default: 'customer',
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      // Bumped whenever the user clicks "No, secure my account" on a login
+      // alert. Every JWT carries the tokenVersion it was issued with, so
+      // bumping this instantly invalidates every existing session/token
+      // without needing a server-side token blacklist.
     },
     profilePicture: {
       type: String,
@@ -92,6 +101,18 @@ const userSchema = new mongoose.Schema(
     timestamps: true, // Automatically manages createdAt and updatedAt fields
   }
 );
+
+// Hash password automatically before saving if modified
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Instance method to compare entered password with hashed database password
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
 // Fallback pattern to prevent "Cannot overwrite model once compiled" errors during backend server restarts
 const User = mongoose.models.User || mongoose.model('User', userSchema);

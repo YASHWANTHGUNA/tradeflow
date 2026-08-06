@@ -1,39 +1,46 @@
 // server/middleware/authMiddleware.js
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
   let token;
 
-  // Check if the authorization header exists and starts with 'Bearer'
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
-      // Get token from header (Format is "Bearer <token>")
-      token = req.headers.authorization.split(' ')[1];
-
-      // Verify the token using your secret key
+      token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Fetch the user from the database (excluding the password) and attach it to the request
-      req.user = await User.findById(decoded.id).select('-password');
+      req.user = await User.findById(decoded.id).select("-password");
 
-      next(); // Move on to the actual route controller
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authorized, user not found" });
+      }
+
+      // If someone clicked "No, secure my account", tokenVersion was bumped —
+      // every token issued before that moment is now stale.
+      if ((decoded.tokenVersion || 0) !== (req.user.tokenVersion || 0)) {
+        return res.status(401).json({
+          message: "Session revoked for security. Please log in again.",
+          code: "SESSION_REVOKED",
+        });
+      }
+
+      next();
     } catch (error) {
       console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      res.status(401).json({ message: "Not authorized, token failed" });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token provided' });
+    res.status(401).json({ message: "Not authorized, no token provided" });
   }
 };
 
-// Optional: Middleware to restrict access to merchants only
 export const merchantOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'merchant') {
+  if (req.user && req.user.role === "merchant") {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as a merchant' });
+    res.status(403).json({ message: "Not authorized as a merchant" });
   }
 };
