@@ -2,9 +2,24 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Once tradeflowapp.me is verified in Resend, switch FROM_EMAIL to it.
-// Falls back to Resend's shared sandbox domain if yours isn't verified yet.
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "TradeFlow <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "TradeFlow <noreply@tradeflowapp.me>";
+
+// Helper function to handle cold-start DNS/network glitches with exponential backoff retry
+async function sendWithRetry(emailOptions, retries = 3, delay = 1000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await resend.emails.send(emailOptions);
+    } catch (error) {
+      console.warn(`[Resend Warning] Attempt ${attempt} failed:`, error?.error?.message || error.message);
+      if (attempt === retries) {
+        console.error("[Resend Error] All retry attempts failed.");
+        throw error;
+      }
+      // Wait before retrying (exponential backoff)
+      await new Promise((resolve) => setTimeout(resolve, delay * attempt));
+    }
+  }
+}
 
 // ---- Registration OTP ----
 export async function sendRegistrationOtp(toEmail, otp) {
@@ -31,7 +46,7 @@ export async function sendRegistrationOtp(toEmail, otp) {
     </td></tr>
   </table>`;
 
-  return resend.emails.send({
+  return sendWithRetry({
     from: FROM_EMAIL,
     to: toEmail,
     subject: `${otp} is your TradeFlow verification code`,
@@ -79,7 +94,7 @@ export async function sendLoginAlert(toEmail, { name, timestamp, ip, confirmUrl,
     </td></tr>
   </table>`;
 
-  return resend.emails.send({
+  return sendWithRetry({
     from: FROM_EMAIL,
     to: toEmail,
     subject: "New sign-in to your TradeFlow account",
